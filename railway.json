@@ -1,0 +1,8 @@
+{
+  "build": {
+    "env": {
+      "BOT_TOKEN": "8136077266:AAGKD8aUT0O52tkEHA_ANYESthXOD6GZxnY"
+    }
+  },
+  "start": "python main.py"
+}
