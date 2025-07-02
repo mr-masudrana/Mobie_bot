@@ -1,46 +1,49 @@
 import json
-import os
 from telegram import Update
 from telegram.ext import Updater, CommandHandler, CallbackContext
+import os
 
+# Load movie data from movies.json
 def load_movies():
-    with open("movies.json", "r", encoding="utf-8") as f:
+    with open('movies.json', 'r', encoding='utf-8') as f:
         return json.load(f)
 
+movies = load_movies()
+
+# /start command
 def start(update: Update, context: CallbackContext):
-    update.message.reply_text(
-        "🎬 Welcome to Movie Bot!\n\n"
-        "Use /search movie_name to find a movie.\n"
-        "Use /category to see available categories."
-    )
+    update.message.reply_text("🎬 Welcome to Movie Bot!\n\nUse /search <movie name>\nUse /category to see categories")
 
+# /search command
 def search(update: Update, context: CallbackContext):
-    query = ' '.join(context.args).lower()
-    movies = load_movies()
-    found = False
-    for movie in movies:
-        if query in movie['title'].lower():
-            update.message.reply_text(
-                f"🎞️ *{movie['title']}*\n"
-                f"📁 Category: {movie['category']}\n"
-                f"🔗 [Watch/Download]({movie['link']})",
-                parse_mode="Markdown"
-            )
-            found = True
-    if not found:
-        update.message.reply_text("❌ Movie not found.")
-
-def category(update: Update, context: CallbackContext):
-    movies = load_movies()
-    categories = sorted(set(m['category'] for m in movies))
-    update.message.reply_text("📚 Available Categories:\n" + '\n'.join(f"• {c}" for c in categories))
-
-def main():
-    token = os.getenv("BOT_TOKEN")
-    if not token:
-        print("Error: BOT_TOKEN environment variable not set.")
+    if not context.args:
+        update.message.reply_text("❗ Usage: /search <movie name>")
         return
-    updater = Updater(token, use_context=True)
+
+    query = " ".join(context.args).lower()
+    result = [m for m in movies if query in m["title"].lower()]
+
+    if not result:
+        update.message.reply_text("🔍 No movie found.")
+        return
+
+    for m in result:
+        update.message.reply_text(f"🎬 {m['title']} ({m['year']})\nCategory: {m['category']}\n🔗 {m['link']}")
+
+# /category command
+def category(update: Update, context: CallbackContext):
+    cats = set(m['category'] for m in movies)
+    cat_list = "\n".join(sorted(cats))
+    update.message.reply_text(f"🎭 Available Categories:\n{cat_list}")
+
+# Main function
+def main():
+    TOKEN = os.getenv("BOT_TOKEN")
+    if not TOKEN:
+        print("❌ BOT_TOKEN not found in environment.")
+        return
+
+    updater = Updater(TOKEN, use_context=True)
     dp = updater.dispatcher
 
     dp.add_handler(CommandHandler("start", start))
@@ -48,7 +51,8 @@ def main():
     dp.add_handler(CommandHandler("category", category))
 
     updater.start_polling()
+    print("✅ Bot is running...")
     updater.idle()
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
