@@ -1,13 +1,12 @@
 import json
+import os
 from telegram import Update
 from telegram.ext import Updater, CommandHandler, CallbackContext
 
-# Load movie data from JSON file
 def load_movies():
     with open("movies.json", "r", encoding="utf-8") as f:
         return json.load(f)
 
-# /start command
 def start(update: Update, context: CallbackContext):
     update.message.reply_text(
         "🎬 Welcome to Movie Bot!\n\n"
@@ -15,7 +14,6 @@ def start(update: Update, context: CallbackContext):
         "Use /category to see available categories."
     )
 
-# /search command
 def search(update: Update, context: CallbackContext):
     query = ' '.join(context.args).lower()
     movies = load_movies()
@@ -32,14 +30,17 @@ def search(update: Update, context: CallbackContext):
     if not found:
         update.message.reply_text("❌ Movie not found.")
 
-# /category command
 def category(update: Update, context: CallbackContext):
     movies = load_movies()
     categories = sorted(set(m['category'] for m in movies))
     update.message.reply_text("📚 Available Categories:\n" + '\n'.join(f"• {c}" for c in categories))
 
 def main():
-    updater = Updater("8136077266:AAGKD8aUT0O52tkEHA_ANYESthXOD6GZxnY", use_context=True)
+    token = os.getenv("BOT_TOKEN")
+    if not token:
+        print("Error: BOT_TOKEN environment variable not set.")
+        return
+    updater = Updater(token, use_context=True)
     dp = updater.dispatcher
 
     dp.add_handler(CommandHandler("start", start))
